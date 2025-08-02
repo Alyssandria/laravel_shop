@@ -103,6 +103,9 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     </TextLink>
                 </div>
             </form>
+            <a href={route('oauth.login', "google")} className="text-center p-4 border border-white">
+                Sign in with google
+            </a>
 
             {status && <div className="mb-4 text-center text-sm font-medium text-green-600">{status}</div>}
         </AuthLayout>
