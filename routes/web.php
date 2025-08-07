@@ -13,6 +13,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('dashboard');
 });
 
+require __DIR__ . '/cart.php';
 require __DIR__ . '/shop.php';
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

@@ -1,27 +1,21 @@
-import {
-    Card,
-    CardContent,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card"
-import { cn } from "@/lib/utils"
-import { Products, SharedData } from "@/types"
-import { router, usePage } from "@inertiajs/react"
-import { Loader2Icon, ShoppingCartIcon } from "lucide-react"
-import { ComponentProps, useState } from "react"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import { Products, SharedData } from '@/types';
+import { router, usePage } from '@inertiajs/react';
+import { Loader2Icon, ShoppingCartIcon } from 'lucide-react';
+import { ComponentProps, useState } from 'react';
 
 type ShopPropsType = {
-    products: Products[]
-}
+    products: Products[];
+};
 
 type ProductCardProps = {
-    data: Products
-} & ComponentProps<"div">
+    data: Products;
+} & ComponentProps<'div'>;
 
 type CartProps = {
-    productId: number
-} & ComponentProps<typeof ShoppingCartIcon>
+    productId: number;
+} & ComponentProps<typeof ShoppingCartIcon>;
 
 function Cart({ productId, className, ...props }: CartProps) {
     const { auth } = usePage<SharedData>().props;
@@ -37,11 +31,11 @@ function Cart({ productId, className, ...props }: CartProps) {
         setIsLoading(true);
 
         const response = await fetch(route('cart.add', productId), {
-            method: "post",
+            method: 'post',
             headers: {
-                'Accept': 'application/json',
+                Accept: 'application/json',
                 'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement).content,
-            }
+            },
         });
 
         if (!response.ok) {
@@ -50,16 +44,15 @@ function Cart({ productId, className, ...props }: CartProps) {
 
         setIsLoading(false);
         console.log(await response.json());
-    }
+    };
 
-    return (
-        isLoading ?
-            <Loader2Icon className="animate-spin" />
-            :
-            <button type="button" onClick={() => handleClick(productId)}>
-                <ShoppingCartIcon className={cn("cursor-pointer", className)}{...props} />
-            </button >
-    )
+    return isLoading ? (
+        <Loader2Icon className="animate-spin" />
+    ) : (
+        <button type="button" onClick={() => handleClick(productId)}>
+            <ShoppingCartIcon className={cn('cursor-pointer', className)} {...props} />
+        </button>
+    );
 }
 
 function ProductCard({ data, className, ...props }: ProductCardProps) {
@@ -76,17 +69,15 @@ function ProductCard({ data, className, ...props }: ProductCardProps) {
                 <Cart productId={data.id} />
             </CardFooter>
         </Card>
-    )
+    );
 }
 
 export default function Shop({ products }: ShopPropsType) {
     return (
         <div className="grid grid-cols-3 gap-8">
             {products.map((el) => {
-                return (
-                    <ProductCard data={el} key={el.id} />
-                )
+                return <ProductCard data={el} key={el.id} />;
             })}
         </div>
-    )
+    );
 }

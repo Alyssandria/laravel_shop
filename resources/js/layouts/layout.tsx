@@ -1,13 +1,14 @@
-import { CartSidebar } from "@/components/carts/CartSidebar";
-import { SharedData } from "@/types";
-import { Link, usePage } from "@inertiajs/react";
-import { ComponentProps } from "react";
+import { CartSidebar } from '@/components/carts/CartSidebar';
+import { SharedData } from '@/types';
+import { Link, usePage } from '@inertiajs/react';
+import { LucideShoppingBasket } from 'lucide-react';
+import { ComponentProps } from 'react';
 
 export default function Layout({ children }: ComponentProps<'div'>) {
     const { auth } = usePage<SharedData>().props;
     return (
         <div className="flex min-h-screen flex-col">
-            <header className="p-8 w-full text-sm not-has-[nav]:hidden">
+            <header className="w-full p-8 text-sm not-has-[nav]:hidden">
                 <nav className="flex items-center justify-end gap-4">
                     <Link
                         href={route('shop')}
@@ -16,7 +17,12 @@ export default function Layout({ children }: ComponentProps<'div'>) {
                         Shop
                     </Link>
                     {auth.user ? (
-                        <CartSidebar />
+                        <>
+                            <Link href={route('cart')}>
+                                <LucideShoppingBasket className="size-7 cursor-pointer" />
+                            </Link>
+                            <CartSidebar />
+                        </>
                     ) : (
                         <>
                             <Link
@@ -36,11 +42,9 @@ export default function Layout({ children }: ComponentProps<'div'>) {
                 </nav>
             </header>
             <div className="flex w-full">
-                <main className="text-secondary-foreground dark:text-foreground w-full p-4">
-                    {children}
-                </main>
+                <main className="w-full p-4 text-secondary-foreground dark:text-foreground">{children}</main>
             </div>
             <div className="hidden h-14.5 lg:block"></div>
         </div>
-    )
+    );
 }
