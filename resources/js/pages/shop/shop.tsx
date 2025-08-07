@@ -81,7 +81,7 @@ function ProductCard({ data, className, ...props }: ProductCardProps) {
 
 export default function Shop({ products }: ShopPropsType) {
     return (
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-3 gap-8">
             {products.map((el) => {
                 return (
                     <ProductCard data={el} key={el.id} />
