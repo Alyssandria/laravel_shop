@@ -6,9 +6,14 @@ import {
     CardTitle,
 } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import { Products } from "@/types"
-import { ShoppingCartIcon } from "lucide-react"
-import { ComponentProps } from "react"
+import { Products, SharedData } from "@/types"
+import { router, usePage } from "@inertiajs/react"
+import { Loader2Icon, ShoppingCartIcon } from "lucide-react"
+import { ComponentProps, useState } from "react"
+
+type ShopPropsType = {
+    products: Products[]
+}
 
 type ProductCardProps = {
     data: Products
@@ -19,14 +24,41 @@ type CartProps = {
 } & ComponentProps<typeof ShoppingCartIcon>
 
 function Cart({ productId, className, ...props }: CartProps) {
+    const { auth } = usePage<SharedData>().props;
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+
     const handleClick = async (productId: number) => {
         // fetch data
+        // check if user is logged in before fetching
+        if (!auth.user) {
+            return router.visit(route('login'));
+        }
 
+        setIsLoading(true);
+
+        const response = await fetch(route('cart.add', productId), {
+            method: "post",
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement).content,
+            }
+        });
+
+        if (!response.ok) {
+            return console.log(response.status);
+        }
+
+        setIsLoading(false);
+        console.log(await response.json());
     }
+
     return (
-        <button type="button" onClick={() => handleClick(productId)}>
-            <ShoppingCartIcon className={cn("cursor-pointer", className)}{...props} />
-        </button>
+        isLoading ?
+            <Loader2Icon className="animate-spin" />
+            :
+            <button type="button" onClick={() => handleClick(productId)}>
+                <ShoppingCartIcon className={cn("cursor-pointer", className)}{...props} />
+            </button >
     )
 }
 
@@ -47,13 +79,12 @@ function ProductCard({ data, className, ...props }: ProductCardProps) {
     )
 }
 
-export default function Shop({ products }) {
-    console.log(products);
+export default function Shop({ products }: ShopPropsType) {
     return (
         <div className="grid grid-cols-4 gap-2">
-            {products.map((el: Products) => {
+            {products.map((el) => {
                 return (
-                    <ProductCard data={el} />
+                    <ProductCard data={el} key={el.id} />
                 )
             })}
         </div>
