@@ -10,7 +10,7 @@ use Inertia\Inertia;
 
 class CartController extends Controller
 {
-    public function addCart(Request $request, int $productID)
+    public function addItem(Request $request, int $productID)
     {
         $user = $request->user();
 
@@ -30,20 +30,30 @@ class CartController extends Controller
         return response()->json($cart->cartItems()->where('product_id', $productID)->first());
     }
 
-    public function remove(Request $request, int $productId)
+    public function removeItem(Request $request, int $productId)
     {
-        dd('test');
-        // $userCart = $request->user()->cart();
+        $userCart = $request->user()->cart()->first();
 
-        // if ($product = $userCart->cartItems()->where('product_id', $productId)->first()) {
-        //     $product->delete();
-        // } else {
-        //     //CANNOT FIND PRODUCT OR SOMETHING ELSE WENT WRONG
-        //     logger()->warning('Request failed: ' . 'Failure to find product');
-        // }
+        if ($product = $userCart->cartItems()->where('product_id', $productId)->first()) {
+            $product->delete();
+        } else {
+            //CANNOT FIND PRODUCT OR SOMETHING ELSE WENT WRONG
+            logger()->warning('Request failed: ' . 'Failure to find product');
+        }
+
+        $products = $this->getCartItems($request);
+
+        return response()->json(['products' => $products]);
     }
 
     public function getCart(Request $request)
+    {
+        $products = $this->getCartItems($request);
+
+        return Inertia::render('shop/cart', ['products' => $products]);
+    }
+
+    private function getCartItems(Request $request)
     {
         $user = $request->user();
         $cartItems = $user->cart()->first()->cartItems()->get();
@@ -76,6 +86,6 @@ class CartController extends Controller
             }
         }
 
-        return Inertia::render('shop/cart', ['products' => $products]);
+        return $products;
     }
 }
