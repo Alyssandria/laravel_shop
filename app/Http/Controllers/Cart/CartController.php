@@ -15,7 +15,7 @@ class CartController extends Controller
         $user = $request->user();
 
         $cart = $user->cart()->firstOrCreate([
-            'user_id' =>  $user->id
+            'user_id' => $user->id,
         ]);
 
         if ($existing = $cart->cartItems()->where('product_id', $productID)->first()) {
@@ -23,11 +23,24 @@ class CartController extends Controller
         } else {
             $cart->cartItems()->create([
                 'product_id' => $productID,
-                'quantity' => 1
+                'quantity' => 1,
             ]);
         }
 
         return response()->json($cart->cartItems()->where('product_id', $productID)->first());
+    }
+
+    public function remove(Request $request, int $productId)
+    {
+        dd('test');
+        // $userCart = $request->user()->cart();
+
+        // if ($product = $userCart->cartItems()->where('product_id', $productId)->first()) {
+        //     $product->delete();
+        // } else {
+        //     //CANNOT FIND PRODUCT OR SOMETHING ELSE WENT WRONG
+        //     logger()->warning('Request failed: ' . 'Failure to find product');
+        // }
     }
 
     public function getCart(Request $request)
@@ -43,20 +56,20 @@ class CartController extends Controller
 
         // FETCH ALL PRODUCT IN CART BASED ON ID
         $responses = Http::pool(function (Pool $pool) use ($cartItems) {
-            return $cartItems->map(function ($item) use ($pool) {
-                return ($pool->get('https://dummyjson.com/products/' . $item['product_id']));
-            })->toArray();
+            return $cartItems
+                ->map(function ($item) use ($pool) {
+                    return $pool->get('https://dummyjson.com/products/' . $item['product_id']);
+                })
+                ->toArray();
         });
 
         $products = []; // PUT SUCCESSFUL REQUESTS TO ARRAY
         foreach ($responses as $index => $response) {
             if ($response->successful()) {
-
                 $products[] = [
-                    "product" => $response->json(),
-                    "quantity" => $itemQuantity[$index]
+                    'product' => $response->json(),
+                    'quantity' => $itemQuantity[$index],
                 ];
-
             } else {
                 // REQUEST FAILURE HANDLER
                 logger()->warning('Request failed: ' . $response->status());

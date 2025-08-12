@@ -1,15 +1,55 @@
+import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Products } from '@/types';
+import { Trash } from 'lucide-react';
 import { ComponentProps } from 'react';
 
-type CartItems = {
+type CartItem = {
     product: Products;
     quantity: number;
 };
 
-const CartTable = ({ cartItems }: { cartItems: CartItems[] } & ComponentProps<typeof Table>) => {
+const DeleteItemButton = ({ item }: { item: CartItem }) => {
+    const handleItemRemove = async (productId: number) => {
+        //remove item from cart
+
+        try {
+            console.log(productId);
+
+            const response = await fetch(route('cart.remove', productId), {
+                method: 'delete',
+                headers: {
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement).content,
+                },
+            });
+
+            if (!response.ok) {
+                return console.log(response.status);
+            }
+
+            console.log(await response.json());
+        } catch (error) {
+            console.error('Network error:', error);
+        }
+    };
+
     return (
-        <Table>
+        <Button
+            variant="secondary"
+            size="icon"
+            onClick={() => {
+                handleItemRemove(item.product.id);
+            }}
+        >
+            <Trash />
+        </Button>
+    );
+};
+
+const CartTable = ({ cartItems, className, ...props }: { cartItems: CartItem[] } & ComponentProps<typeof Table>) => {
+    return (
+        <Table className={className} {...props}>
             <TableHeader>
                 <TableRow>
                     <TableHead></TableHead>
@@ -31,7 +71,9 @@ const CartTable = ({ cartItems }: { cartItems: CartItems[] } & ComponentProps<ty
                             <TableCell>{item.product.price}</TableCell>
                             <TableCell>{item.quantity}</TableCell>
                             <TableCell>{Math.round(item.product.price * item.quantity * 100) / 100}</TableCell>
-                            <TableCell></TableCell>
+                            <TableCell>
+                                <DeleteItemButton item={item} />
+                            </TableCell>
                         </TableRow>
                     );
                 })}
@@ -40,7 +82,7 @@ const CartTable = ({ cartItems }: { cartItems: CartItems[] } & ComponentProps<ty
     );
 };
 
-const cart = ({ products }: { products: CartItems[] }) => {
+const cart = ({ products }: { products: CartItem[] }) => {
     return (
         <div>
             <CartTable cartItems={products} />
