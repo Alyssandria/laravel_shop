@@ -57,7 +57,7 @@ const CartTable = ({ cartItems, onRemove, className, ...props }: CartTableType) 
     );
 };
 
-const cart = ({ products }: { products: CartItem[] }) => {
+const Cart = ({ products }: { products: CartItem[] }) => {
     const [cartItems, setCartItems] = useState<CartItem[]>(products);
 
     const removeItem = async (id: number) => {
@@ -87,4 +87,4 @@ const cart = ({ products }: { products: CartItem[] }) => {
     );
 };
 
-export default cart;
+export default Cart;
