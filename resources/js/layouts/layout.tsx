@@ -1,7 +1,6 @@
 import { CartSidebar } from '@/components/carts/CartSidebar';
 import { SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { LucideShoppingBasket } from 'lucide-react';
 import { ComponentProps } from 'react';
 
 export default function Layout({ children }: ComponentProps<'div'>) {
@@ -18,9 +17,6 @@ export default function Layout({ children }: ComponentProps<'div'>) {
                     </Link>
                     {auth.user ? (
                         <>
-                            <Link href={route('cart')}>
-                                <LucideShoppingBasket className="size-7 cursor-pointer" />
-                            </Link>
                             <CartSidebar />
                         </>
                     ) : (

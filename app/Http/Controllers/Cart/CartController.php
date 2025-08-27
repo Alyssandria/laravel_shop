@@ -46,6 +46,13 @@ class CartController extends Controller
         return response()->json(['products' => $products]);
     }
 
+    public function getItems(Request $request)
+    {
+        $products = $this->getCartItems($request);
+
+        return response()->json(['products' => $products]);
+    }
+
     public function getCart(Request $request)
     {
         $products = $this->getCartItems($request);
