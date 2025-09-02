@@ -1,52 +1,27 @@
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Products } from '@/types';
+import useCartContext from '@/hooks/use-cartcontext';
+import { roundNumberByDecimalPlace } from '@/lib/utils';
 import { Link } from '@inertiajs/react';
 import { ShoppingCartIcon, X } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-
-type CartItem = {
-    product: Products;
-    quantity: number;
-};
+import { useMemo, useState } from 'react';
 
 export function CartSidebar() {
-    const [cartItems, setCartItems] = useState<CartItem[]>([]);
+    const { products: cartItems, dispatch } = useCartContext();
+    const [open, setOpen] = useState<boolean>(false);
 
     const subtotal = useMemo(() => {
-        const total = cartItems.reduce((acc, item) => acc + item.product.price, 0);
-        return total;
+        return roundNumberByDecimalPlace(
+            cartItems.reduce((acc, item) => acc + item.product.price, 0),
+            2,
+        );
     }, [cartItems]);
 
-    const fetchData = async () => {
-        try {
-            const response = await fetch(route('cart.items'), {
-                method: 'get',
-                headers: {
-                    Accept: 'application/json',
-                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement).content,
-                },
-            });
-
-            if (!response.ok) {
-                return console.log(response.status);
-            }
-
-            const items = await response.json();
-            console.log(items);
-            setCartItems(items.products);
-        } catch (error) {
-            console.error('Network error:', error);
-        }
-    };
-
-    useEffect(() => {
-        fetchData();
-    }, []);
-
     const handleRemoveItem = async (id: number) => {
-        setCartItems(cartItems?.filter((item) => item.product.id !== id));
+        const item = cartItems.find((item) => item.product.id == id);
+        if (!item) throw new Error('Cart Item Remove Failure: Cart item does not exist');
+        dispatch({ type: 'REMOVE_ITEM', payload: item });
 
         try {
             const response = await fetch(route('cart.remove', id), {
@@ -66,12 +41,8 @@ export function CartSidebar() {
     };
 
     return (
-        <Sheet
-            onOpenChange={(open) => {
-                if (open) fetchData();
-            }}
-        >
-            <SheetTrigger className="size-8 cursor-pointer">
+        <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger className='size-8 cursor-pointer'>
                 <ShoppingCartIcon />
             </SheetTrigger>
             <SheetContent>
@@ -81,11 +52,11 @@ export function CartSidebar() {
                 </SheetHeader>
                 <Table>
                     <TableHeader>
-                        <TableRow className="hover:bg-transparent">
+                        <TableRow className='hover:bg-transparent'>
                             <TableHead></TableHead>
                             <TableHead></TableHead>
-                            <TableHead className="text-right">
-                                <Button variant="destructive" size="icon" className="my-2 rounded-full">
+                            <TableHead className='text-right'>
+                                <Button variant='destructive' size='icon' className='my-2 rounded-full'>
                                     <X />
                                 </Button>
                             </TableHead>
@@ -94,12 +65,12 @@ export function CartSidebar() {
                     <TableBody>
                         {cartItems.map((item) => {
                             return (
-                                <TableRow>
+                                <TableRow key={item.product.id}>
                                     <TableCell>
                                         <img src={item.product.thumbnail} />
                                     </TableCell>
                                     <TableCell>
-                                        <div className="flex flex-col">
+                                        <div className='flex flex-col'>
                                             <p>{item.product.title}</p>
                                             <p>
                                                 {item.quantity} X {item.product.price}
@@ -108,9 +79,9 @@ export function CartSidebar() {
                                     </TableCell>
                                     <TableCell>
                                         <Button
-                                            variant="secondary"
-                                            size="icon"
-                                            className="rounded-full"
+                                            variant='secondary'
+                                            size='icon'
+                                            className='rounded-full'
                                             onClick={() => {
                                                 handleRemoveItem(item.product.id);
                                             }}
@@ -124,11 +95,11 @@ export function CartSidebar() {
                     </TableBody>
                 </Table>
                 <SheetFooter>
-                    <div className="flex justify-between">
+                    <div className='flex justify-between'>
                         {' '}
                         <p>Subtotal</p>${subtotal}
                     </div>
-                    <Button asChild variant="secondary">
+                    <Button asChild variant='secondary' onClick={() => setOpen(false)}>
                         <Link href={route('cart')}>Cart Page</Link>
                     </Button>
                 </SheetFooter>

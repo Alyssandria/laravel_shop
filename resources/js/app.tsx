@@ -1,5 +1,6 @@
 import '../css/app.css';
 
+import CartProvider from '@/context/CartProvider';
 import { createInertiaApp } from '@inertiajs/react';
 import { createRoot } from 'react-dom/client';
 import { initializeTheme } from './hooks/use-appearance';
@@ -11,14 +12,18 @@ createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     resolve: (name) => {
         const pages = import.meta.glob('./pages/**/*.tsx', { eager: true });
-        let page = pages[`./pages/${name}.tsx`];
+        const page = pages[`./pages/${name}.tsx`];
         page.default.layout = page.default.layout || ((page) => <Layout children={page} />);
         return page;
     },
     setup({ el, App, props }) {
         const root = createRoot(el);
 
-        root.render(<App {...props} />);
+        root.render(
+            <CartProvider>
+                <App {...props} />
+            </CartProvider>,
+        );
     },
     progress: {
         color: '#4B5563',

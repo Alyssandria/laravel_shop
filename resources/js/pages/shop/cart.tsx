@@ -1,13 +1,11 @@
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Products } from '@/types';
+import { CartItem } from '@/context/CartProvider';
+import useCartContext from '@/hooks/use-cartcontext';
+import { roundNumberByDecimalPlace } from '@/lib/utils';
+import { Link } from '@inertiajs/react';
 import { Trash } from 'lucide-react';
-import { ComponentProps, useState } from 'react';
-
-type CartItem = {
-    product: Products;
-    quantity: number;
-};
+import { ComponentProps, useMemo } from 'react';
 
 type CartTableType = {
     cartItems: CartItem[];
@@ -32,16 +30,16 @@ const CartTable = ({ cartItems, onRemove, className, ...props }: CartTableType) 
                     return (
                         <TableRow key={item.product.id}>
                             <TableCell>
-                                <img src={item.product.thumbnail} className="max-h-16 max-w-16" />
+                                <img src={item.product.thumbnail} className='max-h-16 max-w-16' />
                             </TableCell>
                             <TableCell>{item.product.title}</TableCell>
                             <TableCell>{item.product.price}</TableCell>
                             <TableCell>{item.quantity}</TableCell>
-                            <TableCell>{Math.round(item.product.price * item.quantity * 100) / 100}</TableCell>
+                            <TableCell>{roundNumberByDecimalPlace(item.product.price * item.quantity, 2)}</TableCell>
                             <TableCell>
                                 <Button
-                                    variant="secondary"
-                                    size="icon"
+                                    variant='secondary'
+                                    size='icon'
                                     onClick={() => {
                                         onRemove(item.product.id);
                                     }}
@@ -57,11 +55,22 @@ const CartTable = ({ cartItems, onRemove, className, ...props }: CartTableType) 
     );
 };
 
-const Cart = ({ products }: { products: CartItem[] }) => {
-    const [cartItems, setCartItems] = useState<CartItem[]>(products);
+const Cart = () => {
+    const { products: cartItems, dispatch } = useCartContext();
+
+    const subtotal = useMemo(() => {
+        return roundNumberByDecimalPlace(
+            cartItems.reduce((acc, item) => acc + item.product.price * item.quantity, 0),
+            2,
+        );
+    }, [cartItems]);
+
+    const total = subtotal;
 
     const removeItem = async (id: number) => {
-        setCartItems(cartItems.filter((item) => item.product.id !== id));
+        const item = cartItems.find((item) => item.product.id == id);
+        if (!item) throw new Error('Cart Item Remove Failure: Cart item does not exist');
+        dispatch({ type: 'REMOVE_ITEM', payload: item });
 
         try {
             const response = await fetch(route('cart.remove', id), {
@@ -81,8 +90,22 @@ const Cart = ({ products }: { products: CartItem[] }) => {
     };
 
     return (
-        <div>
+        <div className='flex flex-row'>
             <CartTable cartItems={cartItems} onRemove={removeItem} />
+            <div>
+                <span className='text-3xl font-semibold'>Cart Totals</span>
+                <div className='test'>
+                    <span>Subtotal</span>
+                    <span>{subtotal}</span>
+                </div>
+                <div className=''>
+                    <span>Total</span>
+                    <span>{total}</span>
+                </div>
+                <Button asChild>
+                    <Link href={route('checkout')}>Check Out</Link>
+                </Button>
+            </div>
         </div>
     );
 };

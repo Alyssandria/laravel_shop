@@ -1,4 +1,5 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import useCartContext from '@/hooks/use-cartcontext';
 import { cn } from '@/lib/utils';
 import { Products, SharedData } from '@/types';
 import { router, usePage } from '@inertiajs/react';
@@ -14,14 +15,15 @@ type ProductCardProps = {
 } & ComponentProps<'div'>;
 
 type CartProps = {
-    productId: number;
+    product: Products;
 } & ComponentProps<typeof ShoppingCartIcon>;
 
-function Cart({ productId, className, ...props }: CartProps) {
+function Cart({ product, className, ...props }: CartProps) {
     const { auth } = usePage<SharedData>().props;
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const { dispatch } = useCartContext();
 
-    const handleClick = async (productId: number) => {
+    const handleClick = async (product: Products) => {
         // fetch data
         // check if user is logged in before fetching
         if (!auth.user) {
@@ -30,7 +32,7 @@ function Cart({ productId, className, ...props }: CartProps) {
 
         setIsLoading(true);
 
-        const response = await fetch(route('cart.add', productId), {
+        const responsePost = await fetch(route('cart.add', product.id), {
             method: 'post',
             headers: {
                 Accept: 'application/json',
@@ -38,24 +40,24 @@ function Cart({ productId, className, ...props }: CartProps) {
             },
         });
 
-        if (!response.ok) {
-            return console.log(response.status);
+        if (!responsePost.ok) {
+            return console.log(responsePost.status);
         }
 
+        dispatch({ type: 'ADD', payload: { product, quantity: 1 } });
         setIsLoading(false);
-        console.log(await response.json());
     };
 
     return isLoading ? (
-        <Loader2Icon className="animate-spin" />
+        <Loader2Icon className='animate-spin' />
     ) : (
-        <button type="button" onClick={() => handleClick(productId)}>
+        <button type='button' onClick={() => handleClick(product)}>
             <ShoppingCartIcon className={cn('cursor-pointer', className)} {...props} />
         </button>
     );
 }
 
-function ProductCard({ data, className, ...props }: ProductCardProps) {
+function ProductCard({ data }: ProductCardProps) {
     return (
         <Card>
             <CardHeader>
@@ -64,9 +66,9 @@ function ProductCard({ data, className, ...props }: ProductCardProps) {
             <CardContent>
                 <img src={data.thumbnail} />
             </CardContent>
-            <CardFooter className="flex justify-between gap-4">
+            <CardFooter className='flex justify-between gap-4'>
                 <p>{data.price}</p>
-                <Cart productId={data.id} />
+                <Cart product={data} />
             </CardFooter>
         </Card>
     );
@@ -74,7 +76,7 @@ function ProductCard({ data, className, ...props }: ProductCardProps) {
 
 export default function Shop({ products }: ShopPropsType) {
     return (
-        <div className="grid grid-cols-3 gap-8">
+        <div className='grid grid-cols-3 gap-8'>
             {products.map((el) => {
                 return <ProductCard data={el} key={el.id} />;
             })}

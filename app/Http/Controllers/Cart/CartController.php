@@ -53,11 +53,9 @@ class CartController extends Controller
         return response()->json(['products' => $products]);
     }
 
-    public function getCart(Request $request)
+    public function getCart()
     {
-        $products = $this->getCartItems($request);
-
-        return Inertia::render('shop/cart', ['products' => $products]);
+        return Inertia::render('shop/cart');
     }
 
     private function getCartItems(Request $request)
