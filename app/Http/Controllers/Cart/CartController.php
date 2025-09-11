@@ -49,7 +49,6 @@ class CartController extends Controller
     public function getItems(Request $request)
     {
         $products = $this->getCartItems($request);
-
         return response()->json(['products' => $products]);
     }
 
@@ -62,6 +61,10 @@ class CartController extends Controller
     {
         $user = $request->user();
         $cartItems = $user->cart()->first()->cartItems()->get();
+
+        if (!$cartItems) {
+            return [];
+        }
 
         // GET PRODUCT QUANTITY BY ORDER
         $itemQuantity = [];

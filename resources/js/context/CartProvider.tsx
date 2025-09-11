@@ -13,25 +13,25 @@ export type CartState = {
 
 export type CartAction =
     | {
-          type: 'ADD';
-          payload: CartItem;
-      }
+        type: 'ADD';
+        payload: CartItem;
+    }
     | {
-          type: 'SET';
-          payload: CartItem[];
-      }
+        type: 'SET';
+        payload: CartItem[];
+    }
     | {
-          type: 'UPDATE_ITEM';
-          payload: CartItem;
-          index: number;
-      }
+        type: 'UPDATE_ITEM';
+        payload: CartItem;
+        index: number;
+    }
     | {
-          type: 'REMOVE_ITEM';
-          payload: CartItem;
-      }
+        type: 'REMOVE_ITEM';
+        payload: CartItem;
+    }
     | {
-          type: 'DELETE';
-      };
+        type: 'DELETE';
+    };
 
 const reducer = (state: CartState, action: CartAction): CartState => {
     switch (action.type) {
@@ -59,6 +59,7 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         const fetchData = async () => {
+            // router.visit(route('cart.items'));
             try {
                 const response = await fetch(route('cart.items'), {
                     method: 'get',

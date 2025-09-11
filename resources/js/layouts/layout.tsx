@@ -1,3 +1,4 @@
+import { Carts } from '@/components/carts/CartEme';
 import { CartSidebar } from '@/components/carts/CartSidebar';
 import { SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
@@ -17,7 +18,8 @@ export default function Layout({ children }: ComponentProps<'div'>) {
                     </Link>
                     {auth.user ? (
                         <>
-                            <CartSidebar />
+                            {/* <CartSidebar /> */}
+                            <Carts />
                         </>
                     ) : (
                         <>

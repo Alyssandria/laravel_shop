@@ -9,6 +9,7 @@ import { useMemo, useState } from 'react';
 
 export function CartSidebar() {
     const { products: cartItems, dispatch } = useCartContext();
+    console.log(cartItems);
     const [open, setOpen] = useState<boolean>(false);
 
     const subtotal = useMemo(() => {
