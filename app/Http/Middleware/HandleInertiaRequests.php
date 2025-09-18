@@ -40,7 +40,7 @@ class HandleInertiaRequests extends Middleware
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
         $user = $request->user();
-        $cart = $user->cart()->first();
+        $cart = $user ? $user->cart()->first() : null;
 
         return [
             ...parent::share($request),
@@ -48,13 +48,10 @@ class HandleInertiaRequests extends Middleware
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
                 'user' => $user,
-                'cartItems' => $user && $cart ? $cart->cartItems()->get() : []
+                'cartItems' => $user && $cart ? $cart->cartItems()->get() : [],
             ],
-            'ziggy' => fn (): array => [
-                ...(new Ziggy)->toArray(),
-                'location' => $request->url(),
-            ],
-            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'ziggy' => fn(): array => [...new Ziggy()->toArray(), 'location' => $request->url()],
+            'sidebarOpen' => !$request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }
 }

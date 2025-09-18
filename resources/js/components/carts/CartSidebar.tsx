@@ -1,16 +1,43 @@
-import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import useCartContext from '@/hooks/use-cartcontext';
-import { roundNumberByDecimalPlace } from '@/lib/utils';
+import { cn, fetchWithHeaders, roundNumberByDecimalPlace } from '@/lib/utils';
+import { Products } from '@/types';
 import { Link } from '@inertiajs/react';
-import { ShoppingCartIcon, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Loader2Icon, ShoppingCartIcon, X } from 'lucide-react';
+import { ComponentProps, useEffect, useMemo, useState } from 'react';
+import { Button } from '../ui/button';
+import { Skeleton } from '../ui/skeleton';
 
-export function CartSidebar() {
-    const { products: cartItems, dispatch } = useCartContext();
-    console.log(cartItems);
-    const [open, setOpen] = useState<boolean>(false);
+type cartItem = {
+    product: Products;
+    quantity: number;
+};
+
+type CartDeleteProps = {
+    productId: number;
+    handleDelete: (id: number) => Promise<void>;
+} & ComponentProps<typeof Button>;
+
+const CartDelete = ({ productId, handleDelete, className, ...props }: CartDeleteProps) => {
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+
+    const handleClick = async () => {
+        setIsLoading(true);
+        await handleDelete(productId);
+        setIsLoading(false);
+    };
+
+    return (
+        <Button variant='secondary' size='icon' className={cn('rounded-full', className)} {...props} onClick={handleClick}>
+            {isLoading ? <Loader2Icon className='animate-spin' /> : <X />}
+        </Button>
+    );
+};
+
+export const CartSidebar = () => {
+    const [open, setOpen] = useState<boolean>();
+    const [isLoading, setisLoading] = useState<boolean>(false);
+    const [cartItems, setCartItem] = useState<cartItem[]>([]);
 
     const subtotal = useMemo(() => {
         return roundNumberByDecimalPlace(
@@ -19,27 +46,39 @@ export function CartSidebar() {
         );
     }, [cartItems]);
 
-    const handleRemoveItem = async (id: number) => {
-        const item = cartItems.find((item) => item.product.id == id);
-        if (!item) throw new Error('Cart Item Remove Failure: Cart item does not exist');
-        dispatch({ type: 'REMOVE_ITEM', payload: item });
+    useEffect(() => {
+        setisLoading(true);
 
-        try {
-            const response = await fetch(route('cart.remove', id), {
-                method: 'delete',
-                headers: {
-                    Accept: 'application/json',
-                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement).content,
-                },
-            });
+        const fetchData = async () => {
+            const response = await fetchWithHeaders(route('cart.items'));
 
             if (!response.ok) {
-                return console.log(response.status);
+                // HANDLE LATER
             }
-        } catch (error) {
-            console.error('Network error:', error);
+
+            const json = await response.json();
+
+            setCartItem(json.products);
+            setisLoading(false);
+        };
+
+        if (open) {
+            fetchData();
         }
+    }, [open]);
+
+    const handleDelete = async (id: number) => {
+        const response = await fetchWithHeaders(route('cart.remove', id), 'DELETE');
+
+        if (!response.ok) {
+            //HANDLE LATER
+        }
+
+        const json = await response.json();
+        setCartItem(json.products);
     };
+
+    console.log(cartItems);
 
     return (
         <Sheet open={open} onOpenChange={setOpen}>
@@ -64,41 +103,42 @@ export function CartSidebar() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {cartItems.map((item) => {
-                            return (
-                                <TableRow key={item.product.id}>
-                                    <TableCell>
-                                        <img src={item.product.thumbnail} />
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className='flex flex-col'>
-                                            <p>{item.product.title}</p>
-                                            <p>
-                                                {item.quantity} X {item.product.price}
-                                            </p>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Button
-                                            variant='secondary'
-                                            size='icon'
-                                            className='rounded-full'
-                                            onClick={() => {
-                                                handleRemoveItem(item.product.id);
-                                            }}
-                                        >
-                                            <X />
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            );
-                        })}
+                        {isLoading ? (
+                            <TableRow>
+                                <TableCell>
+                                    <Skeleton className='h-20 w-full' />
+                                </TableCell>
+                            </TableRow>
+                        ) : !cartItems.length ? (
+                            'No Cart Items Available'
+                        ) : (
+                            cartItems.map((item) => {
+                                return (
+                                    <TableRow key={item.product.id}>
+                                        <TableCell>
+                                            <img src={item.product.thumbnail} />
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className='flex flex-col'>
+                                                <p>{item.product.title}</p>
+                                                <p>
+                                                    {item.quantity} X {item.product.price}
+                                                </p>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <CartDelete productId={item.product.id} handleDelete={handleDelete} />
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })
+                        )}
                     </TableBody>
                 </Table>
                 <SheetFooter>
                     <div className='flex justify-between'>
-                        {' '}
-                        <p>Subtotal</p>${subtotal}
+                        <span>Subtotal</span>
+                        <span>${subtotal}</span>
                     </div>
                     <Button asChild variant='secondary' onClick={() => setOpen(false)}>
                         <Link href={route('cart')}>Cart Page</Link>
@@ -107,4 +147,4 @@ export function CartSidebar() {
             </SheetContent>
         </Sheet>
     );
-}
+};
