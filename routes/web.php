@@ -1,12 +1,13 @@
 <?php
 
+use App\Http\Controllers\Cart\CartController;
 use App\Services\PaypalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function (PaypalService $paypal) {
-    return $paypal->handlePayment();
+Route::get('/', function () {
+    return Inertia::render('welcome');
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -15,10 +16,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('dashboard');
 });
 
-Route::get('/paypal/return', function (PaypalService $paypal, Request $request) {
+Route::get('/paypal/checkout', [CartController::class, 'getCheckout'])->name('paypal.checkout');
 
+Route::get('/paypal/return', function (PaypalService $paypal, Request $request) {
     $orderBody = [
-        'id' => $request->query('token')
+        'id' => $request->query('token'),
     ];
     $paypal->captureOrder($orderBody);
 })->name('paypal.return');

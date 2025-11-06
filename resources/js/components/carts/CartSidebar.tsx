@@ -143,6 +143,9 @@ export const CartSidebar = () => {
                     <Button asChild variant='secondary' onClick={() => setOpen(false)}>
                         <Link href={route('cart')}>Cart Page</Link>
                     </Button>
+                    <Button asChild variant='secondary' onClick={() => setOpen(false)}>
+                        <a href='/paypal/checkout'>Checkout</a>
+                    </Button>
                 </SheetFooter>
             </SheetContent>
         </Sheet>

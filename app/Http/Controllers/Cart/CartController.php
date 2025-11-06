@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Cart;
 
 use App\Http\Controllers\Controller;
+use App\Services\PaypalService;
 use Illuminate\Http\Client\Pool;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -55,6 +56,27 @@ class CartController extends Controller
     public function getCart()
     {
         return Inertia::render('shop/cart');
+    }
+
+    public function getCheckout(PaypalService $paypal, Request $request)
+    {
+        $products = $this->getCartItems($request);
+
+        $items = array_map(function ($item) {
+            $product = $item['product'];
+
+            return [
+                'name' => $product['title'],
+                'quantity' => $item['quantity'],
+                'sku' => $product['sku'],
+                'unit_amount' => [
+                    'currency_code' => 'USD',
+                    'value' => round($product['price'] - $product['price'] * ($product['discountPercentage'] / 100), 2),
+                ],
+            ];
+        }, $products);
+
+        return $paypal->handlePayment($items);
     }
 
     private function getCartItems(Request $request)
