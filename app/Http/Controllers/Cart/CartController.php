@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Cart;
 
 use App\Http\Controllers\Controller;
+use App\Services\CartService;
 use App\Services\PaypalService;
+use App\Services\ProductService;
 use Illuminate\Http\Client\Pool;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -31,7 +33,7 @@ class CartController extends Controller
         return response()->json($cart->cartItems()->where('product_id', $productID)->first());
     }
 
-    public function removeItem(Request $request, int $productId)
+    public function removeItem(Request $request, CartService $carts,int $productId)
     {
         $userCart = $request->user()->cart()->first();
 
@@ -42,15 +44,15 @@ class CartController extends Controller
             logger()->warning('Request failed: ' . 'Failure to find product');
         }
 
-        $products = $this->getCartItems($request);
+        $products = $carts->getCartItems($request);
 
         return response()->json(['products' => $products]);
     }
 
-    public function getItems(Request $request)
+    public function getItems(ProductService $products, CartService $carts, Request $request)
     {
-        $products = $this->getCartItems($request);
-        return response()->json(['products' => $products]);
+        $products = $products->getProducts($carts->getCartItems($request));
+        return response()->json(['products' => $products->map(fn($product) => ['product' => $product])->values()]);
     }
 
     public function getCart()
@@ -58,9 +60,9 @@ class CartController extends Controller
         return Inertia::render('shop/cart');
     }
 
-    public function getCheckout(PaypalService $paypal, Request $request)
+    public function getCheckout(PaypalService $paypal, CartService $carts, Request $request)
     {
-        $products = $this->getCartItems($request);
+        $products = $carts->getCartItems($request, $request->query('ids'));
 
         $items = array_map(function ($item) {
             $product = $item['product'];
@@ -68,7 +70,7 @@ class CartController extends Controller
             return [
                 'name' => $product['title'],
                 'quantity' => $item['quantity'],
-                'sku' => $product['sku'],
+                'sku' => $product['id'],
                 'unit_amount' => [
                     'currency_code' => 'USD',
                     'value' => round($product['price'] - $product['price'] * ($product['discountPercentage'] / 100), 2),
@@ -77,45 +79,5 @@ class CartController extends Controller
         }, $products);
 
         return $paypal->handlePayment($items);
-    }
-
-    private function getCartItems(Request $request)
-    {
-        $user = $request->user();
-        $cartItems = $user->cart()->first()->cartItems()->get();
-
-        if (!$cartItems) {
-            return [];
-        }
-
-        // GET PRODUCT QUANTITY BY ORDER
-        $itemQuantity = [];
-        foreach ($cartItems->toArray() as $product) {
-            $itemQuantity[] = $product['quantity'];
-        }
-
-        // FETCH ALL PRODUCT IN CART BASED ON ID
-        $responses = Http::pool(function (Pool $pool) use ($cartItems) {
-            return $cartItems
-                ->map(function ($item) use ($pool) {
-                    return $pool->get('https://dummyjson.com/products/' . $item['product_id']);
-                })
-                ->toArray();
-        });
-
-        $products = []; // PUT SUCCESSFUL REQUESTS TO ARRAY
-        foreach ($responses as $index => $response) {
-            if ($response->successful()) {
-                $products[] = [
-                    'product' => $response->json(),
-                    'quantity' => $itemQuantity[$index],
-                ];
-            } else {
-                // REQUEST FAILURE HANDLER
-                logger()->warning('Request failed: ' . $response->status());
-            }
-        }
-
-        return $products;
     }
 }

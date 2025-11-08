@@ -2,11 +2,12 @@ import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetT
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn, fetchWithHeaders, roundNumberByDecimalPlace } from '@/lib/utils';
 import { Products } from '@/types';
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { Loader2Icon, ShoppingCartIcon, X } from 'lucide-react';
 import { ComponentProps, useEffect, useMemo, useState } from 'react';
 import { Button } from '../ui/button';
 import { Skeleton } from '../ui/skeleton';
+import { Checkbox } from '../ui/checkbox';
 
 type cartItem = {
     product: Products;
@@ -38,8 +39,10 @@ export const CartSidebar = () => {
     const [open, setOpen] = useState<boolean>();
     const [isLoading, setisLoading] = useState<boolean>(false);
     const [cartItems, setCartItem] = useState<cartItem[]>([]);
+    const [selected, setSelected] = useState<number[]>([]);
 
     const subtotal = useMemo(() => {
+        console.log(cartItems);
         return roundNumberByDecimalPlace(
             cartItems.reduce((acc, item) => acc + item.product.price, 0),
             2,
@@ -60,12 +63,14 @@ export const CartSidebar = () => {
 
             setCartItem(json.products);
             setisLoading(false);
+
         };
 
         if (open) {
             fetchData();
         }
     }, [open]);
+
 
     const handleDelete = async (id: number) => {
         const response = await fetchWithHeaders(route('cart.remove', id), 'DELETE');
@@ -93,7 +98,18 @@ export const CartSidebar = () => {
                 <Table>
                     <TableHeader>
                         <TableRow className='hover:bg-transparent'>
-                            <TableHead></TableHead>
+                            <TableHead>
+                                <Checkbox
+                                    checked={cartItems.length === selected.length}
+                                    onCheckedChange={(checked) => {
+                                        if (checked) {
+                                            setSelected(cartItems.map(el => el.product.id));
+                                        } else {
+                                            setSelected([]);
+                                        }
+                                    }}
+                                />
+                            </TableHead>
                             <TableHead></TableHead>
                             <TableHead className='text-right'>
                                 <Button variant='destructive' size='icon' className='my-2 rounded-full'>
@@ -115,6 +131,18 @@ export const CartSidebar = () => {
                             cartItems.map((item) => {
                                 return (
                                     <TableRow key={item.product.id}>
+                                        <TableCell>
+                                            <Checkbox
+                                                checked={selected.some(el => el === item.product.id)}
+                                                onCheckedChange={checked => {
+                                                    if (checked) {
+                                                        setSelected([...selected, item.product.id])
+                                                    } else {
+                                                        setSelected(selected.filter(el => el !== item.product.id))
+                                                    }
+                                                }}
+                                            />
+                                        </TableCell>
                                         <TableCell>
                                             <img src={item.product.thumbnail} />
                                         </TableCell>
@@ -144,7 +172,7 @@ export const CartSidebar = () => {
                         <Link href={route('cart')}>Cart Page</Link>
                     </Button>
                     <Button asChild variant='secondary' onClick={() => setOpen(false)}>
-                        <a href='/paypal/checkout'>Checkout</a>
+                        <a href={route('paypal.checkout', { ids: selected.length === cartItems.length ? "all" : selected })}>Checkout</a>
                     </Button>
                 </SheetFooter>
             </SheetContent>

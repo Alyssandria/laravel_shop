@@ -4,13 +4,6 @@ namespace App\Services;
 
 use PaypalServerSdkLib\Authentication\ClientCredentialsAuthCredentialsBuilder;
 use PaypalServerSdkLib\Environment;
-use PaypalServerSdkLib\Models\Builders\AmountBreakdownBuilder;
-use PaypalServerSdkLib\Models\Builders\AmountWithBreakdownBuilder;
-use PaypalServerSdkLib\Models\Builders\ItemBuilder;
-use PaypalServerSdkLib\Models\Builders\MoneyBuilder;
-use PaypalServerSdkLib\Models\Builders\OrderApplicationContextBuilder;
-use PaypalServerSdkLib\Models\Builders\OrderRequestBuilder;
-use PaypalServerSdkLib\Models\Builders\PurchaseUnitRequestBuilder;
 use PaypalServerSdkLib\PaypalServerSdkClient;
 use PaypalServerSdkLib\PaypalServerSdkClientBuilder;
 
@@ -51,7 +44,7 @@ class PaypalService
                 ],
                 'purchase_units' => [
                     [
-                        'invoice_id' => '90210',
+                        'custom_id' => 'qeweqwe',
                         'amount' => [
                             'currency_code' => 'USD',
                             'value' => (string) $amountValue,
@@ -91,6 +84,15 @@ class PaypalService
     public function captureOrder(array $body)
     {
         $response = $this->client->getOrdersController()->captureOrder($body);
-        dd(json_decode($response->getBody(), true));
+
+        $json = json_decode($response->getBody(), true);
+
+        $test = $this->client->getOrdersController()->getOrder([
+            'id' => $json['id']
+        ]);
+
+        dd(
+            json_decode($test->getBody(), true)
+        );
     }
 }
