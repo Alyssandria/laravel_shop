@@ -33,7 +33,7 @@ class CartController extends Controller
         return response()->json($cart->cartItems()->where('product_id', $productID)->first());
     }
 
-    public function removeItem(Request $request, CartService $carts,int $productId)
+    public function removeItem(Request $request, CartService $carts, int $productId)
     {
         $userCart = $request->user()->cart()->first();
 
@@ -49,9 +49,9 @@ class CartController extends Controller
         return response()->json(['products' => $products]);
     }
 
-    public function getItems(ProductService $products, CartService $carts, Request $request)
+    public function getItems(ProductService $productService, CartService $carts, Request $request)
     {
-        $products = $products->getProducts($carts->getCartItems($request));
+        $products = $productService->getProducts($carts->getCartItems($request));
         return response()->json(['products' => $products->map(fn($product) => ['product' => $product])->values()]);
     }
 
@@ -60,23 +60,29 @@ class CartController extends Controller
         return Inertia::render('shop/cart');
     }
 
-    public function getCheckout(PaypalService $paypal, CartService $carts, Request $request)
+    public function getCheckout(PaypalService $paypal, ProductService $productService, CartService $carts, Request $request)
     {
-        $products = $carts->getCartItems($request, $request->query('ids'));
+        $cart = $carts->getCartItems($request, $request->query('ids'));
+        $products = $productService->getProducts($cart);
 
-        $items = array_map(function ($item) {
-            $product = $item['product'];
-
-            return [
-                'name' => $product['title'],
-                'quantity' => $item['quantity'],
-                'sku' => $product['id'],
+        $items = [];
+        $keys = array_keys($cart->toArray());
+        for ($i = 0; $i < count($cart) - 1; $i++) {
+            $itemId = $keys[$i];
+            $productId = $cart[$itemId]['product_id'];
+            $items[] = [
+                'name' => $products[$productId]['title'],
+                'quantity' => $cart[$itemId]['quantity'],
+                'sku' => $cart[$itemId]['id'],
                 'unit_amount' => [
                     'currency_code' => 'USD',
-                    'value' => round($product['price'] - $product['price'] * ($product['discountPercentage'] / 100), 2),
+                    'value' => round(
+                        $products[$productId]['price'] - $products[$productId]['price'] * ($products[$productId]['discountPercentage'] / 100),
+                        2,
+                    ),
                 ],
             ];
-        }, $products);
+        }
 
         return $paypal->handlePayment($items);
     }

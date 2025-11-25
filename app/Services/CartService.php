@@ -8,28 +8,33 @@ use Illuminate\Support\Collection;
 class CartService
 {
     /**
-     * @return array|array<int,array>
+     * @return Collection
      * @param string|mixed[] $ids
      */
-    public function getCartItems(Request $request, string|array $ids = null): Collection
+    public function getCartItems(Request $request, string|array|null $ids = null)
     {
         $user = $request->user();
         $userCart = $user->cart()->first();
 
-        if(!$userCart) {
-            return [];
+        if (!$userCart) {
+            return collect();
         }
 
         $userCartItems = $userCart->cartItems();
 
-        if($ids == null || $ids == "all") {
-            return $cartItems = $userCartItems->get()->mapWithKeys(function ($item) {
+        if ($ids == null || $ids == 'all') {
+            $cartItems = $userCartItems->get()->mapWithKeys(function ($item) {
                 return [$item['id'] => $item];
             });
+
+            return $cartItems;
         }
 
-        return $userCartItems->whereIn('id', $ids)->get()->mapWithKeys(function ($item) {
-            return [$item['id'] => $item];
-        });
+        return $userCartItems
+            ->whereIn('id', $ids)
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [$item['id'] => $item];
+            });
     }
 }

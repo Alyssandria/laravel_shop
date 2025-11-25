@@ -5,12 +5,14 @@ namespace App\Services;
 use Illuminate\Http\Client\Pool;
 use Illuminate\Support\Facades\Http;
 
-class ProductService {
+class ProductService
+{
     /**
-     * @return void
+     * @return Collection
      * @param mixed $data
      */
-    public function getProducts($data) {
+    public function getProducts($data)
+    {
         $responses = Http::pool(function (Pool $pool) use ($data) {
             return $data
                 ->map(function ($item) use ($pool) {
