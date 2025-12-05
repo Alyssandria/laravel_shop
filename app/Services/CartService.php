@@ -30,8 +30,10 @@ class CartService
             return $cartItems;
         }
 
+        $idsInt = array_map('intval', $ids);
+
         return $userCartItems
-            ->whereIn('id', $ids)
+            ->whereIn('product_id', $idsInt)
             ->get()
             ->mapWithKeys(function ($item) {
                 return [$item['id'] => $item];

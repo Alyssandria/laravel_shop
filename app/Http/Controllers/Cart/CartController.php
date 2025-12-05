@@ -51,8 +51,15 @@ class CartController extends Controller
 
     public function getItems(ProductService $productService, CartService $carts, Request $request)
     {
-        $products = $productService->getProducts($carts->getCartItems($request));
-        return response()->json(['products' => $products->map(fn($product) => ['product' => $product])->values()]);
+        $productList = $productService->getProducts($carts->getCartItems($request))->values()->toArray();
+        $cartItemsList = $carts->getCartItems($request)->values()->toArray();
+        $itemList = [];
+
+        for ($i = 0; $i < count($cartItemsList); $i++) {
+            $itemList[$i] = ['product' => $productList[$i], 'quantity' => $cartItemsList[$i]['quantity']];
+        }
+
+        return response()->json(['products' => $itemList]);
     }
 
     public function getCart()
@@ -67,7 +74,7 @@ class CartController extends Controller
 
         $items = [];
         $keys = array_keys($cart->toArray());
-        for ($i = 0; $i < count($cart) - 1; $i++) {
+        for ($i = 0; $i < count($cart); $i++) {
             $itemId = $keys[$i];
             $productId = $cart[$itemId]['product_id'];
             $items[] = [

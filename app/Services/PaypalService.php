@@ -25,7 +25,7 @@ class PaypalService
     {
         $amountValue = 0;
         foreach ($items as $item) {
-            $amountValue += $item['unit_amount']['value'];
+            $amountValue += $item['unit_amount']['value'] * $item['quantity'];
         }
 
         $orderBody = [
@@ -44,7 +44,6 @@ class PaypalService
                 ],
                 'purchase_units' => [
                     [
-                        'custom_id' => 'qeweqwe',
                         'amount' => [
                             'currency_code' => 'USD',
                             'value' => (string) $amountValue,
@@ -52,10 +51,6 @@ class PaypalService
                                 'item_total' => [
                                     'currency_code' => 'USD',
                                     'value' => (string) $amountValue,
-                                ],
-                                'shipping' => [
-                                    'currency_code' => 'USD',
-                                    'value' => '0.00',
                                 ],
                             ],
                         ],
@@ -88,11 +83,9 @@ class PaypalService
         $json = json_decode($response->getBody(), true);
 
         $test = $this->client->getOrdersController()->getOrder([
-            'id' => $json['id']
+            'id' => $json['id'],
         ]);
 
-        dd(
-            json_decode($test->getBody(), true)
-        );
+        dd(json_decode($test->getBody(), true));
     }
 }
