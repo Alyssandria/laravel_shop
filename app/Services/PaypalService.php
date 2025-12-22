@@ -79,13 +79,13 @@ class PaypalService
     public function captureOrder(array $body)
     {
         $response = $this->client->getOrdersController()->captureOrder($body);
+        $responseJson = json_decode($response->getBody(), true);
 
-        $json = json_decode($response->getBody(), true);
-
-        $test = $this->client->getOrdersController()->getOrder([
-            'id' => $json['id'],
+        $capturedOrder = $this->client->getOrdersController()->getOrder([
+            'id' => $responseJson['id'],
         ]);
+        $capturedOrderJson = json_decode($capturedOrder->getBody(), true);
 
-        dd(json_decode($test->getBody(), true));
+        return $capturedOrderJson;
     }
 }
